@@ -3,6 +3,9 @@ sequenceDiagram
     actor Comp as Compradora
     actor Vend as Vendedora
     participant T as Transacao
+    participant API as API de Transações
+    participant F as Fila escrow.eventos
+    participant W as Worker de Liquidação
     participant P as Pagamento
     participant G as GatewayPagamento
     participant M as MtrService
@@ -17,7 +20,10 @@ sequenceDiagram
     T-->>Comp: CobrancaResponseDTO
 
     Note over Comp,G: A compradora paga por Pix ou Boleto
-    G-)T: receberEventoEscrow(EventoEscrowDTO)
+    G->>API: webhook HTTPS com HMAC
+    API->>F: publica EventoEscrowDTO
+    F-)W: consome evento
+    W->>T: receberEventoEscrow(EventoEscrowDTO)
 
     alt evento.status == RETIDO
         T->>T: confirmarPagamento()
